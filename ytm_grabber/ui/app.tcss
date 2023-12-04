@@ -1,0 +1,73 @@
+Screen {
+    align: center middle;
+    padding: 1;
+    # width: 90%;
+}
+
+ContentSwitcher {
+    background: $panel;
+    border: round $primary;
+    width: 90%;
+    height: 1fr;
+}
+
+DataTable {
+    background: $panel;
+}
+
+MarkdownH2 {
+    background: $primary;
+    color: gray;
+    border: none;
+    padding: 0;
+    
+}
+
+Input.-valid {
+    border: tall $success 60%;
+}
+
+Input.-valid:focus {
+    border: tall $success;
+}
+
+Input {
+    padding: 0 1;
+    width: 99%;
+    offset: 1 0;
+}
+Select {
+    # width: 80%;
+}
+.height_auto {
+    height: auto;    
+}
+.width_90percent {
+    width: 90%;    
+}
+
+
+.label_text {
+    margin: 1 5;
+    text-style: bold;
+    # width: 20%;
+}
+
+#validation_result {
+    margin: 0 2;
+}
+
+#buttons {
+    height: 3;
+    width: auto;
+}
+
+#download_list_tab {
+    margin: 0 5;
+}
+
+#start_download_button{
+    padding: 0 10;
+    margin: 1 1;
+    align: center middle;
+}

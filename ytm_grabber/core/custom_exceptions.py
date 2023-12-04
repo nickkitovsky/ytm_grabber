@@ -1,0 +1,13 @@
+"""Exceptions module."""
+
+
+class TooManyRetryError(Exception):
+    """TooManyRetryError exception class for retry decorator."""
+
+
+class ParsingError(Exception):
+    """Error of parsing data."""
+
+
+class PayloadError(Exception):
+    """Wrong payload format."""
