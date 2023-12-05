@@ -11,3 +11,7 @@ class ParsingError(Exception):
 
 class PayloadError(Exception):
     """Wrong payload format."""
+
+
+class AuthFilesError(Exception):
+    """Parse authfile error."""

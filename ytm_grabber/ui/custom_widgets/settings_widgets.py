@@ -8,7 +8,7 @@ from textual.containers import Horizontal, Vertical
 from textual.validation import Function, ValidationResult
 from textual.widgets import Input, Label, Markdown, Select, Static
 
-from ytm_grabber.core import auth_data
+from ytm_grabber.core import auth_data, custom_exceptions
 
 if TYPE_CHECKING:
     from ytm_grabber.ui.app import YtMusicApp
@@ -19,29 +19,43 @@ class SelectUserWidget(Static):
 
     def compose(self) -> ComposeResult:
         self.app: YtMusicApp  # define type for self.app for better work IDE
-        # unpacking two values for load authdata once
-        default_authdata, self.authdata = self.load_authdata()
+        self.authdata = self.load_authdata()
         with Horizontal(classes='height_auto width_90percent'):
             yield Label(renderable='Select user', classes='label_text')
 
             yield Select(
                 options=((line, line) for line in self.authdata),
                 allow_blank=False,
-                value=default_authdata,
+                value=self._get_first_authfile(authdata_files=self.authdata),
             )
 
-    def load_authdata(self) -> tuple[str, dict[str, auth_data.AuthData]]:
-        authdata_files = auth_data.load_authdata_from_dir(self.app.app_paths['auth_files_dir'])
-        auth_files_keys = tuple(authdata_files)
-        # set first entry by default
+    def load_authdata(self) -> dict[str, auth_data.AuthData]:
+        """Read and parse files in app_paths['auth_files_dir'].
+
+        Raises:
+            custom_exceptions.AuthFilesError: not found any authfile
+
+        Returns:
+            dict[str, auth_data.AuthData]: {filename: AuthData}
+        """
+        authdata_files = auth_data.load_authdata_from_dir(dir_path=self.app.app_paths['auth_files_dir'])
         if authdata_files:
-            default_authdata_file = auth_files_keys[0]
-            self.app.app_data['auth_data'] = authdata_files[default_authdata_file]
-            return default_authdata_file, authdata_files
-        raise ValueError('any auth files not found')
+            return authdata_files
+        raise custom_exceptions.AuthFilesError('any auth files not found')
+
+    def _get_first_authfile(self, authdata_files: dict[str, auth_data.AuthData]) -> str:
+        """Return first filename in authdata_files.
+
+        Args:
+            authdata_files (dict[str, auth_data.AuthData]): dict of {filename:AuthData}
+
+        Returns:
+            str: first AuthData file name
+        """
+        return tuple(authdata_files)[0]
 
     @on(Select.Changed)
-    def select_changed(self, event: Select.Changed) -> None:
+    def _select_changed(self, event: Select.Changed) -> None:
         selected_value = str(event.value)
         self.app.app_data['auth_data'] = self.authdata[selected_value]
 
