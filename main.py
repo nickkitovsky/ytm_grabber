@@ -4,23 +4,23 @@ from ytm_grabber.ui.app import YtMusicApp
 
 default_endpoints = [
     Endpoint(
-        title='New releases albums',
-        payload={'browse_id': 'FEmusic_new_releases_albums'},
+        title="New releases albums",
+        payload={"browse_id": "FEmusic_new_releases_albums"},
     ),
     Endpoint(
-        title='Mixed for you',
-        payload={'browse_id': 'FEmusic_mixed_for_you'},
+        title="Mixed for you",
+        payload={"browse_id": "FEmusic_mixed_for_you"},
     ),
     Endpoint(
-        title='Listen again',
-        payload={'browse_id': 'FEmusic_listen_again'},
+        title="Listen again",
+        payload={"browse_id": "FEmusic_listen_again"},
     ),
     Endpoint(
-        title='Library',
-        payload={'browse_id': 'FEmusic_library_landing'},
+        title="Library",
+        payload={"browse_id": "FEmusic_library_landing"},
     ),
 ]
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app = YtMusicApp(endpoints=default_endpoints)
     app.run()

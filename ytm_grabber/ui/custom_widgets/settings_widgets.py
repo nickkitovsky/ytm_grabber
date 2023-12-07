@@ -20,8 +20,8 @@ class SelectUserWidget(Static):
     def compose(self) -> ComposeResult:
         self.app: YtMusicApp  # define type for self.app for better work IDE
         self.authdata = self.load_authdata()
-        with Horizontal(classes='height_auto width_90percent'):
-            yield Label(renderable='Select user', classes='label_text')
+        with Horizontal(classes="height_auto width_90percent"):
+            yield Label(renderable="Select user", classes="label_text")
 
             yield Select(
                 options=((line, line) for line in self.authdata),
@@ -32,32 +32,37 @@ class SelectUserWidget(Static):
     def load_authdata(self) -> dict[str, auth_data.AuthData]:
         """Read and parse files in app_paths['auth_files_dir'].
 
-        Raises:
+        Raises
+        ------
             custom_exceptions.AuthFilesError: not found any authfile
 
-        Returns:
+        Returns
+        -------
             dict[str, auth_data.AuthData]: {filename: AuthData}
         """
-        authdata_files = auth_data.load_authdata_from_dir(dir_path=self.app.app_paths['auth_files_dir'])
+        authdata_files = auth_data.load_authdata_from_dir(dir_path=self.app.app_paths["auth_files_dir"])
         if authdata_files:
             return authdata_files
-        raise custom_exceptions.AuthFilesError('any auth files not found')
+        msg = "any auth files not found"
+        raise custom_exceptions.AuthFilesError(msg)
 
     def _get_first_authfile(self, authdata_files: dict[str, auth_data.AuthData]) -> str:
         """Return first filename in authdata_files.
 
         Args:
+        ----
             authdata_files (dict[str, auth_data.AuthData]): dict of {filename:AuthData}
 
         Returns:
+        -------
             str: first AuthData file name
         """
-        return tuple(authdata_files)[0]
+        return next(iter(authdata_files))
 
     @on(Select.Changed)
     def _select_changed(self, event: Select.Changed) -> None:
         selected_value = str(event.value)
-        self.app.app_data['auth_data'] = self.authdata[selected_value]
+        self.app.app_data["auth_data"] = self.authdata[selected_value]
 
 
 class WellcomeWidget(Static):
@@ -67,8 +72,8 @@ class WellcomeWidget(Static):
         yield Markdown(self._read_wellcome_text())
 
     def _read_wellcome_text(self) -> str:
-        wellcome_text_file = 'ytm_grabber/ui/custom_widgets/wellcome_text.md'
-        with open(file=wellcome_text_file, mode='r', encoding='utf-8') as file_content:
+        wellcome_text_file = "ytm_grabber/ui/custom_widgets/wellcome_text.md"
+        with open(file=wellcome_text_file, encoding="utf-8") as file_content:
             return file_content.read()
 
 
@@ -77,14 +82,14 @@ class TypeDownloadDirWidget(Static):
 
     def compose(self) -> ComposeResult:
         self.app: YtMusicApp  # define type for self.app for better work IDE
-        self._validation_label = Label('', id='validation_result')
-        with Horizontal(classes='height_auto width_90percent'):
-            yield Label(renderable='Enter path', classes='label_text')
-            with Vertical(classes='height_auto'):
+        self._validation_label = Label("", id="validation_result")
+        with Horizontal(classes="height_auto width_90percent"):
+            yield Label(renderable="Enter path", classes="label_text")
+            with Vertical(classes="height_auto"):
                 yield Input(
-                    placeholder='Enter a dir path to download music or `files/music` dir default',
+                    placeholder="Enter a dir path to download music or `files/music` dir default",
                     validators=[
-                        Function(self._is_dir, 'Value is not dir.'),
+                        Function(self._is_dir, "Value is not dir."),
                     ],
                 )
                 yield self._validation_label
@@ -93,13 +98,13 @@ class TypeDownloadDirWidget(Static):
     def _show_invalid_reasons(self, event: Input.Changed) -> None:
         # Updating the UI to show the reasons why validation failed
         if isinstance(event.validation_result, ValidationResult) and event.validation_result.is_valid:
-            self._validation_label.update('')
+            self._validation_label.update("")
         else:
             self._validation_label.update(event.validation_result.failure_descriptions[0])
 
     @on(message_type=Input.Changed)
     def _set_download_dir(self, event: Input.Submitted) -> None:
-        self.app.app_paths['download_dir'] = event.value
+        self.app.app_paths["download_dir"] = event.value
 
     def _is_dir(self, typed_path: str) -> bool:
         return Path(typed_path).is_dir()

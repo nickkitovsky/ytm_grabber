@@ -14,7 +14,7 @@ class Track:
 
     @property
     def full_url(self) -> str:
-        return f'https://www.youtube.com/watch?v={self.video_id}'
+        return f"https://www.youtube.com/watch?v={self.video_id}"
 
 
 class Playlist:
@@ -31,10 +31,10 @@ class Playlist:
             raw_tracks = self._parser.get_tracks()
             self._tracks = [
                 Track(
-                    artist=track.get('artist'),
-                    title=track.get('title'),
-                    lenght=track.get('lenght'),
-                    video_id=track.get('video_id'),
+                    artist=track.get("artist"),
+                    title=track.get("title"),
+                    lenght=track.get("lenght"),
+                    video_id=track.get("video_id"),
                 )
                 for track in raw_tracks
             ]
@@ -43,9 +43,10 @@ class Playlist:
 
 class Endpoint:
     @classmethod
-    def verify_payload(cls, payload: dict):
-        if 'browse_id' not in payload.keys():
-            raise PayloadError('wrong payload keys')
+    def verify_payload(cls, payload: dict) -> None:
+        if "browse_id" not in payload:
+            msg = "wrong payload keys"
+            raise PayloadError(msg)
 
     def __init__(self, title: str, payload: dict[str, str]) -> None:
         self.verify_payload(payload=payload)
@@ -61,8 +62,8 @@ class Endpoint:
             # self._playlists = raw_playlists
             self._playlists = [
                 Playlist(
-                    title=playlist.get('title'),
-                    payload=playlist.get('payload'),
+                    title=playlist.get("title"),
+                    payload=playlist.get("payload"),
                 )
                 for playlist in raw_playlists
             ]
