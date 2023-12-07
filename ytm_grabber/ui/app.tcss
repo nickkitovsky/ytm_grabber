@@ -66,8 +66,16 @@ Select {
     margin: 0 5;
 }
 
-#start_download_button{
+#start_download_button {
     padding: 0 10;
     margin: 1 1;
     align: center middle;
+}
+
+#add_auth_file_button {
+    # width: 80%;
+    padding: 0 10;
+    align: center middle;
+    # offset: 1 0;
+    margin: 0 6;
 }

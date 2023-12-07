@@ -6,28 +6,45 @@ from textual import on
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.validation import Function, ValidationResult
-from textual.widgets import Input, Label, Markdown, Select, Static
+from textual.widgets import Button, Input, Label, Markdown, Select, Static
 
 from ytm_grabber.core import auth_data, custom_exceptions
 
 if TYPE_CHECKING:
+    from textual.widget import Widget
+
     from ytm_grabber.ui.app import YtMusicApp
 
 
 class SelectUserWidget(Static):
     """Select authdata user file."""
 
-    def compose(self) -> ComposeResult:
+    def __init__(self, id: str | None = None, classes: str | None = None) -> None:
+        super().__init__(id=id, classes=classes)
         self.app: YtMusicApp  # define type for self.app for better work IDE
-        self.authdata = self.load_authdata()
-        with Horizontal(classes="height_auto width_90percent"):
-            yield Label(renderable="Select user", classes="label_text")
-
-            yield Select(
+        self.select_user_authfile_widget: Widget
+        try:
+            self.authdata = self.load_authdata()
+        except custom_exceptions.AuthFilesError:
+            self.select_user_authfile_widget = Button(
+                label="CLICK HERE TO ADD NEW AUTH FILE FROM CLIPBOARD",
+                variant="warning",
+                classes="height_auto",
+                id="add_auth_file_button",
+            )
+        else:
+            self.select_user_authfile_widget = Select(
                 options=((line, line) for line in self.authdata),
                 allow_blank=False,
                 value=self._get_first_authfile(authdata_files=self.authdata),
             )
+
+    def compose(self) -> ComposeResult:
+        yield Horizontal(
+            Label(renderable="Select user", classes="label_text"),
+            self.select_user_authfile_widget,
+            classes="height_auto width_90percent",
+        )
 
     def load_authdata(self) -> dict[str, auth_data.AuthData]:
         """Read and parse files in app_paths['auth_files_dir'].
@@ -63,6 +80,10 @@ class SelectUserWidget(Static):
     def _select_changed(self, event: Select.Changed) -> None:
         selected_value = str(event.value)
         self.app.app_data["auth_data"] = self.authdata[selected_value]
+
+    @on(message_type=Button.Pressed, selector="#add_auth_file_button")
+    def _add_new_auth_file(self) -> None:
+        pass
 
 
 class WellcomeWidget(Static):
