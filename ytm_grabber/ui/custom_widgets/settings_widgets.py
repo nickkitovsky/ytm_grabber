@@ -8,7 +8,7 @@ from textual.containers import Horizontal, Vertical
 from textual.validation import Function, ValidationResult
 from textual.widgets import Button, Input, Label, Markdown, Select, Static
 
-from ytm_grabber.core import auth_data, custom_exceptions
+from ytm_grabber.core import authdata, custom_exceptions
 
 if TYPE_CHECKING:
     from textual.widget import Widget
@@ -46,7 +46,7 @@ class SelectUserWidget(Static):
             classes="height_auto width_90percent",
         )
 
-    def load_authdata(self) -> dict[str, auth_data.AuthData]:
+    def load_authdata(self) -> dict[str, authdata.AuthData]:
         """Read and parse files in app_paths['auth_files_dir'].
 
         Raises
@@ -57,13 +57,13 @@ class SelectUserWidget(Static):
         -------
             dict[str, auth_data.AuthData]: {filename: AuthData}
         """
-        authdata_files = auth_data.load_authdata_from_dir(dir_path=self.app.app_paths["auth_files_dir"])
+        authdata_files = authdata.get_authdata_from_dir(dir_path=self.app.app_paths["auth_files_dir"])
         if authdata_files:
             return authdata_files
         msg = "any auth files not found"
         raise custom_exceptions.AuthFilesError(msg)
 
-    def _get_first_authfile(self, authdata_files: dict[str, auth_data.AuthData]) -> str:
+    def _get_first_authfile(self, authdata_files: dict[str, authdata.AuthData]) -> str:
         """Return first filename in authdata_files.
 
         Args:
