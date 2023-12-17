@@ -3,6 +3,7 @@ import json
 import shlex
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Self
 from urllib.parse import parse_qsl, urlsplit
 
 import pyperclip  # type: ignore[import-untyped]
@@ -19,117 +20,116 @@ class AuthData:
     json_data: dict
 
 
-def get_authdata(raw_curl_data: str | Path | list[str]) -> AuthData | None:
-    """Load session data from curl file.
+class AuthDataParser:
+    """Parser for authdata from file or clipboard."""
 
-    Args:
-    ----
-        raw_curl_data (str | Path | list[str]):  Path to curl file
+    def __init__(self, raw_curl_content: list[str]) -> None:
+        self._raw_curl_content = raw_curl_content
+        if "^" in self._raw_curl_content[0]:
+            self._raw_curl_content = self._fix_cmd_break_lines(self._raw_curl_content)
+        try:
+            self.authdata = self.parse_authdata()
+        except IndexError as exc:
+            msg = "error of parse curl_data"
+            raise ParsingError(msg) from exc
 
-    Returns:
-    -------
-        AuthData: dataclass for store data for authentification on Youtube Music
-    """
-    curl_contents = (
-        _read_from_file(curl_file=raw_curl_data) if isinstance(raw_curl_data, (str, Path)) else raw_curl_data
-    )
-    try:
-        return parse_content(curl_contents)
-    except IndexError as exc:
-        msg = "error of parse curl_data"
-        raise ParsingError(msg) from exc
+    def parse_authdata(self) -> AuthData:
+        """Parse content of curl file to AuthData(headers, data, params) dataclass.
 
+        Args:
+        ----
+            content (list[str]): content of file 'copy as cURL' from browser
 
-def get_authdata_from_dir(dir_path: str | Path) -> dict[str, AuthData]:
-    """Load AuthData from dir.
+        Returns:
+        -------
+            AuthData: dataclass for store data for authentification on Youtube Music
+        """
+        # Parsing 'params' section
+        post_url = shlex.split(self._raw_curl_content[0])[1]
+        query_post_url = urlsplit(post_url).query
+        post_params = dict(parse_qsl(query_post_url))
+        # Parsing 'data' section
+        raw_data = shlex.split(s=self._raw_curl_content[-2])[1]
+        json_data = json.loads(s=raw_data)
+        # delete default browse id
+        json_data.pop("browseId", None)
+        # Parsing 'headers' section
+        raw_headers = self._raw_curl_content[1:-2]
+        # Parse str  "-H 'key: value' \\\n" to "key: value"
+        raw_headers_list = [shlex.split(raw_line)[1] for raw_line in raw_headers]
+        # Parse "key: value" to [key, value] and filter list if lenght <2 (lost value)
+        # Split method run twice, but that most clearly, than walrus operator in list comprehansion
+        headers_list = [line.split(": ") for line in raw_headers_list if len(line.split(": ")) == 2]
+        headers = dict(headers_list)
 
-    Args:
-    ----
-        dir_path (str | Path): path to curl files
+        return AuthData(headers=headers, json_data=json_data, params=post_params)
 
-    Returns:
-    -------
-        dict[str, AuthData]: {filename: AuthData}
-    """
-    auth_files: dict = {}
-    if isinstance(dir_path, str) and "\\" in dir_path:
-        dir_path = dir_path.replace("\\", "/")
-    dir_path = Path(dir_path)
-    if Path(dir_path).is_dir():
-        files = dir_path.glob("*")
-        for file in files:
-            try:
-                auth_files |= {file.name: get_authdata(raw_curl_data=file)}
-            except ParsingError:
-                continue
-    return auth_files
+    @classmethod
+    def read_from_file(cls, curl_file: str | Path) -> Self:
+        """Read file from browser, with your session from Dev tools, and then 'copy as cURL'.
 
+        Args:
+        ----
+            curl_file (str | Path): Path to file
 
-def _read_from_file(curl_file: str | Path) -> list[str]:
-    """Read file from browser, with your session from Dev tools, and then 'copy as cURL'.
+        Raises:
+        ------
+            TypeError: Wrong type. You must pass str or Path object
+            FileNotFoundError: Wrong file path
 
-    Args:
-    ----
-        curl_file (str | Path): Path to file
+        Returns:
+        -------
+            AuthDataParser: Content of 'curl file'
+        """
+        if not isinstance(curl_file, (str, Path)):
+            msg = "Incorrect type of `curl_file` (str or Path only)"
+            raise TypeError(msg)
+        try:
+            with Path(curl_file).open(encoding="utf-8") as fs:
+                return cls(fs.readlines())
+        except FileNotFoundError as exc:
+            msg = "Incorrect file name or Path object"
+            raise FileNotFoundError(msg) from exc
 
-    Raises:
-    ------
-        TypeError: Wrong type. You must pass str or Path object
-        FileNotFoundError: Wrong file path
+    @classmethod
+    def read_from_clipboard(cls) -> Self:
+        clipboard_content = pyperclip.paste()
+        return cls(clipboard_content.split("\n"))
 
-    Returns:
-    -------
-        list[str]: Content of 'curl file'
-    """
-    if not isinstance(curl_file, (str, Path)):
-        msg = "Incorrect type of `curl_file` (str or Path only)"
-        raise TypeError(msg)
-    try:
-        with open(curl_file, encoding="utf-8") as fs:
-            return fs.readlines()
-    except FileNotFoundError as exc:
-        msg = "Incorrect file name or Path object"
-        raise FileNotFoundError(msg) from exc
+    def _fix_cmd_break_lines(self, content_with_cr: list) -> list:
+        """Fix cmd windows break line, remove CR character.
 
+        Args:
+        ----
+            content_with_cr (list): content containing cmd break line
 
-def _read_from_clipboard() -> list[str]:
-    clipboard_content = pyperclip.paste()
-    if "^" in clipboard_content:  # if select copy as cURL (cmd)
-        # normalize windows (cmd) endline symbols
-        clipboard_content = clipboard_content.replace("^", "").split("\r\n")
-    else:  # if select copy as cURL (bash)
-        # normalize bash endline symbols (from clipboard)
-        clipboard_content = clipboard_content.replace("\\\r\n", "\\\n").split("\\\n")
-    return clipboard_content
+        Returns:
+        -------
+            list: content not containing cmd break line
+        """
+        return [line.replace("^", "") for line in content_with_cr]
 
+    @classmethod
+    def scan_dir(cls, dir_path: str | Path) -> dict[str, AuthData]:
+        """Scan dir to authdata files.
 
-def parse_content(content: list[str]) -> AuthData:
-    """Parse content of curl file to AuthData(headers, data, params) dataclass.
+        Args:
+        ----
+            dir_path (str | Path): path to curl files
 
-    Args:
-    ----
-        content (list[str]): content of file 'copy as cURL' from browser
-
-    Returns:
-    -------
-        AuthData: dataclass for store data for authentification on Youtube Music
-    """
-    # Parsing 'params' section
-    post_url = shlex.split(content[0])[1]
-    query_post_url = urlsplit(post_url).query
-    post_params = dict(parse_qsl(query_post_url))
-    # Parsing 'data' section
-    raw_data = shlex.split(s=content[-2])[1]
-    json_data = json.loads(s=raw_data)
-    # delete default browse id
-    json_data.pop("browseId", None)
-    # Parsing 'headers' section
-    raw_headers = content[1:-2]
-    # Parse str  "-H 'key: value' \\\n" to "key: value"
-    raw_headers_list = [shlex.split(raw_line)[1] for raw_line in raw_headers]
-    # Parse "key: value" to [key, value] and filter list if lenght <2 (lost value)
-    # Split method run twice, but that most clearly, than walrus operator in list comprehansion
-    headers_list = [line.split(": ") for line in raw_headers_list if len(line.split(": ")) == 2]
-    headers = dict(headers_list)
-
-    return AuthData(headers=headers, json_data=json_data, params=post_params)
+        Returns:
+        -------
+            dict[str, AuthData]: {filename: AuthData}
+        """
+        auth_files: dict = {}
+        if isinstance(dir_path, str) and "\\" in dir_path:
+            dir_path = dir_path.replace("\\", "/")
+        dir_path = Path(dir_path)
+        if Path(dir_path).is_dir():
+            files = dir_path.glob("*")
+            for file in files:
+                try:
+                    auth_files |= {file.name: cls.read_from_file(curl_file=file).authdata}
+                except ParsingError:
+                    continue
+        return auth_files
