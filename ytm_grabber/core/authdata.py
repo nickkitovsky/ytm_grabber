@@ -8,7 +8,7 @@ from urllib.parse import parse_qsl, urlsplit
 
 import pyperclip  # type: ignore[import-untyped]
 
-from ytm_grabber.core.custom_exceptions import ParsingError
+from ytm_grabber.core.custom_exceptions import DumpAuthFileError, ParsingError
 
 
 @dataclass
@@ -26,7 +26,7 @@ class AuthDataParser:
     def __init__(self, raw_curl_content: list[str]) -> None:
         self._raw_curl_content = raw_curl_content
         if "^" in self._raw_curl_content[0]:
-            self._raw_curl_content = self._fix_cmd_break_lines(self._raw_curl_content)
+            self._raw_curl_content = self._fix_cmd_break_lines(raw_curl_content)
         try:
             self.authdata = self.parse_authdata()
         except IndexError as exc:
@@ -63,6 +63,25 @@ class AuthDataParser:
         headers = dict(headers_list)
 
         return AuthData(headers=headers, json_data=json_data, params=post_params)
+
+    def dump_authdata(self, filename: str, authfiles_dir: str | Path = "files/auth/") -> None:
+        """Dump from curl data to file.
+
+        Args:
+        ----
+            filename (str): name of the saved file
+            authfiles_dir (str | Path, optional): Dir for saved files. Defaults to "files/auth/".
+
+        Raises:
+        ------
+            DumpAuthFileError: Raw curl content not found in instance.
+        """
+        if self._raw_curl_content:
+            with Path(f"{authfiles_dir}/{filename}").open(mode="w", encoding="utf-8") as fs:
+                fs.write("".join(self._raw_curl_content))
+        else:
+            msg = "Raw curl content not found."
+            raise DumpAuthFileError(msg)
 
     @classmethod
     def read_from_file(cls, curl_file: str | Path) -> Self:

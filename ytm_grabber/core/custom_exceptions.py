@@ -15,3 +15,7 @@ class PayloadError(Exception):
 
 class AuthFilesError(Exception):
     """Parse authfile error."""
+
+
+class DumpAuthFileError(Exception):
+    """Curl file content not found."""
