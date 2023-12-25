@@ -42,7 +42,7 @@ class UserWidget(Static):
     def __init__(self, id: str | None = None, classes: str | None = None) -> None:
         super().__init__(id=id, classes=classes)
         self.app: YtMusicApp  # define type for self.app for better work IDE
-        self.new_user_widget = NewUserWidget(classes="c")
+        self.new_user_widget = NewUserWidget(classes="height_auto")
         self.select_user_widget = SelectUserWidget(classes="height_auto", id="select_widget")
 
     def compose(self) -> ComposeResult:
