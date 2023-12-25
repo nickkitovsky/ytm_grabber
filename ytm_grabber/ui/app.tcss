@@ -74,8 +74,27 @@ Select {
 
 #add_auth_file_button {
     # width: 80%;
-    padding: 0 10;
+    padding: 0 6;
     align: center middle;
     # offset: 1 0;
-    margin: 0 6;
+    margin: 0 8;
+}
+TypeFilenameScreen {
+    align: center middle;
+}
+
+#filemame_dialog {
+    grid-size: 2;
+    grid-gutter: 1 2;
+    grid-rows: 1fr 3;
+    padding: 0 1;
+    width: 60;
+    height: 11;
+    border: thick $background 80%;
+    background: $surface;
+}
+
+#filename_input {
+    column-span: 2;
+    content-align: center middle;
 }
