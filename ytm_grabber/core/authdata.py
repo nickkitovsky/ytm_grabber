@@ -29,7 +29,7 @@ class AuthDataParser:
             self._raw_curl_content = self._fix_cmd_break_lines(raw_curl_content)
         try:
             self.authdata = self.parse_authdata()
-        except IndexError as exc:
+        except (IndexError, json.JSONDecodeError) as exc:
             msg = "error of parse curl_data"
             raise ParsingError(msg) from exc
 

@@ -11,6 +11,7 @@ from textual.validation import Function, ValidationResult
 from textual.widgets import Button, Input, Label, Markdown, Select, Static
 
 from ytm_grabber.core import authdata
+from ytm_grabber.core.custom_exceptions import ParsingError
 
 if TYPE_CHECKING:
     from ytm_grabber.ui.app import YtMusicApp
@@ -25,7 +26,7 @@ class TypeFilenameScreen(ModalScreen):
             self._filename_input,
             Button("Ok", variant="success", id="ok"),
             Button("Cancel", variant="primary", id="cancel"),
-            id="filemame_dialog",
+            id="modal_dialog",
             classes="height_auto",
         )
 
@@ -35,6 +36,25 @@ class TypeFilenameScreen(ModalScreen):
 
     @on(message_type=Button.Pressed, selector="#cancel")
     def press_cancel(self) -> None:
+        self.app.pop_screen()
+
+
+class ClipboardContentErrorScreen(ModalScreen):
+    """Screen with a dialog clipboard format error."""
+
+    def compose(self) -> ComposeResult:
+        yield Grid(
+            Label(
+                "Clipboard content does not match cURL request.\nSee the instruction please.",
+                classes="center_element",
+            ),
+            Button("Ok", variant="success", classes="center_element", id="ok"),
+            id="modal_dialog",
+            classes="height_auto",
+        )
+
+    @on(message_type=Button.Pressed, selector="#ok")
+    def press_ok(self) -> None:
         self.app.pop_screen()
 
 
@@ -55,15 +75,22 @@ class UserWidget(Static):
     @on(message_type=Button.Pressed, selector="#add_auth_file_button")
     def _add_new_auth_file(self) -> None:
         def dump_clipboard_data(filename: str) -> None:
-            new_user = authdata.AuthDataParser.read_from_clipboard()
             new_user.dump_authdata(filename=filename, authfiles_dir=self.app.app_paths["auth_files_dir"])
-            select_user_widget = self.query_one("#select_user_widget")
-            if isinstance(select_user_widget, Select):
-                select_widget_content = self.select_user_widget.get_select_widget_content()
-                select_user_widget.set_options(select_widget_content["options_list"])
-                select_user_widget.disabled = select_widget_content["disabled_flag"]
+            self._refresh_select_widget()
 
-        self.app.push_screen(TypeFilenameScreen(), dump_clipboard_data)
+        try:
+            new_user = authdata.AuthDataParser.read_from_clipboard()
+        except ParsingError:
+            self.app.push_screen(screen=ClipboardContentErrorScreen())
+        else:
+            self.app.push_screen(TypeFilenameScreen(), dump_clipboard_data)
+
+    def _refresh_select_widget(self) -> None:
+        select_user_widget = self.query_one("#select_user_widget")
+        if isinstance(select_user_widget, Select):
+            select_widget_content = self.select_user_widget.get_select_widget_content()
+            select_user_widget.set_options(select_widget_content["options_list"])
+            select_user_widget.disabled = select_widget_content["disabled_flag"]
 
 
 class NewUserWidget(Static):

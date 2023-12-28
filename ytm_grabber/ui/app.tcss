@@ -83,7 +83,7 @@ TypeFilenameScreen {
     align: center middle;
 }
 
-#filemame_dialog {
+#modal_dialog {
     grid-size: 2;
     grid-gutter: 1 2;
     grid-rows: 1fr 3;
@@ -96,5 +96,10 @@ TypeFilenameScreen {
 
 #filename_input {
     column-span: 2;
+    content-align: center middle;
+}
+.center_element {
+    column-span: 2;
+    align: center middle;
     content-align: center middle;
 }
