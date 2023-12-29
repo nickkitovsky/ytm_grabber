@@ -27,10 +27,6 @@ class TypeFilenameScreen(ModalScreen):
         self.app.pop_screen()
 
 
-#     """Screen with a dialog clipboard format error."""
-# /
-
-
 class ShowMessageScreen(ModalScreen):
     """Parent class for show message screen and a 'ok' button."""
 
@@ -52,6 +48,3 @@ class ShowMessageScreen(ModalScreen):
     @on(message_type=Button.Pressed, selector="#ok")
     def press_ok(self) -> None:
         self.app.pop_screen()
-
-
-# class ClipboardContentErrorScreen(ShowMessageScreen):

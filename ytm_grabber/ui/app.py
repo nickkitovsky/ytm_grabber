@@ -69,5 +69,3 @@ class YtMusicApp(App):
                 self.query_one(ContentSwitcher).current = self.app_buttons["settings"].id
                 error_message = "Authdata file not selected.\nSelect authdata file please."
                 self.app.push_screen(screen=modal_screens.ShowMessageScreen(message=error_message))
-                # msg = "auth data not loaded"
-                # raise AuthDataError(msg)
