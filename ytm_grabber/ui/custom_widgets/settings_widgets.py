@@ -1,68 +1,157 @@
-"""Settinhs widgets."""
+"""Settions widgets."""
+
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Literal
 
 from textual import on
 from textual.app import ComposeResult
-from textual.containers import Horizontal, Vertical
+from textual.containers import Grid, Horizontal, Vertical
+from textual.screen import ModalScreen
 from textual.validation import Function, ValidationResult
-from textual.widgets import Input, Label, Markdown, Select, Static
+from textual.widgets import Button, Input, Label, Markdown, Select, Static
 
-from ytm_grabber.core import auth_data, custom_exceptions
+from ytm_grabber.core import authdata
+from ytm_grabber.core.custom_exceptions import ParsingError
 
 if TYPE_CHECKING:
     from ytm_grabber.ui.app import YtMusicApp
 
 
+class TypeFilenameScreen(ModalScreen):
+    """Screen with a dialog to enter filename."""
+
+    def compose(self) -> ComposeResult:
+        self._filename_input = Input(placeholder="Enter authfile name", id="filename_input")
+        yield Grid(
+            self._filename_input,
+            Button("Ok", variant="success", id="ok"),
+            Button("Cancel", variant="primary", id="cancel"),
+            id="modal_dialog",
+            classes="height_auto",
+        )
+
+    @on(message_type=Button.Pressed, selector="#ok")
+    def press_ok(self) -> None:
+        self.dismiss(self._filename_input.value)
+
+    @on(message_type=Button.Pressed, selector="#cancel")
+    def press_cancel(self) -> None:
+        self.app.pop_screen()
+
+
+class ClipboardContentErrorScreen(ModalScreen):
+    """Screen with a dialog clipboard format error."""
+
+    def compose(self) -> ComposeResult:
+        yield Grid(
+            Label(
+                "Clipboard content does not match cURL request.\nSee the instruction please.",
+                classes="center_element",
+            ),
+            Button("Ok", variant="success", classes="center_element", id="ok"),
+            id="modal_dialog",
+            classes="height_auto",
+        )
+
+    @on(message_type=Button.Pressed, selector="#ok")
+    def press_ok(self) -> None:
+        self.app.pop_screen()
+
+
+class UserWidget(Static):
+    def __init__(self, id: str | None = None, classes: str | None = None) -> None:
+        super().__init__(id=id, classes=classes)
+        self.app: YtMusicApp  # define type for self.app for better work IDE
+        self.new_user_widget = NewUserWidget(classes="height_auto")
+        self.select_user_widget = SelectUserWidget(classes="height_auto", id="select_widget")
+
+    def compose(self) -> ComposeResult:
+        yield Vertical(
+            self.new_user_widget,
+            self.select_user_widget,
+            classes="height_auto",
+        )
+
+    @on(message_type=Button.Pressed, selector="#add_auth_file_button")
+    def _add_new_auth_file(self) -> None:
+        def dump_clipboard_data(filename: str) -> None:
+            new_user.dump_authdata(filename=filename, authfiles_dir=self.app.app_paths["auth_files_dir"])
+            self._refresh_select_widget()
+
+        try:
+            new_user = authdata.AuthDataParser.read_from_clipboard()
+        except ParsingError:
+            self.app.push_screen(screen=ClipboardContentErrorScreen())
+        else:
+            self.app.push_screen(TypeFilenameScreen(), dump_clipboard_data)
+
+    def _refresh_select_widget(self) -> None:
+        select_user_widget = self.query_one("#select_user_widget")
+        if isinstance(select_user_widget, Select):
+            select_widget_content = self.select_user_widget.get_select_widget_content()
+            select_user_widget.set_options(select_widget_content["options_list"])
+            select_user_widget.disabled = select_widget_content["disabled_flag"]
+
+
+class NewUserWidget(Static):
+    def __init__(self, classes: str = "height_auto") -> None:
+        super().__init__(classes=classes)
+        self.app: YtMusicApp  # define type for self.app for better work IDE
+
+    def compose(self) -> ComposeResult:
+        yield Horizontal(
+            Label(renderable="Add user", classes="label_text"),
+            Button(
+                label="Click here to add new authfile from clipboard",
+                variant="warning",
+                classes="height_auto",
+                id="add_auth_file_button",
+            ),
+            classes="height_auto",
+        )
+
+
 class SelectUserWidget(Static):
     """Select authdata user file."""
 
-    def compose(self) -> ComposeResult:
+    def __init__(self, id: str | None = None, classes: str | None = "height_auto") -> None:
+        super().__init__(id=id, classes=classes)
         self.app: YtMusicApp  # define type for self.app for better work IDE
-        self.authdata = self.load_authdata()
-        with Horizontal(classes="height_auto width_90percent"):
-            yield Label(renderable="Select user", classes="label_text")
 
-            yield Select(
-                options=((line, line) for line in self.authdata),
+    def compose(self) -> ComposeResult:
+        options = self.get_select_widget_content()
+
+        yield Horizontal(
+            Label(renderable="Select user", classes="label_text"),
+            Select(
+                id="select_user_widget",
+                options=options["options_list"],
                 allow_blank=False,
-                value=self._get_first_authfile(authdata_files=self.authdata),
-            )
+                value=options["options_list"][-1][1],
+                disabled=options["disabled_flag"],
+            ),
+            classes="height_auto width_90percent",
+        )
 
-    def load_authdata(self) -> dict[str, auth_data.AuthData]:
-        """Read and parse files in app_paths['auth_files_dir'].
+    def get_select_widget_content(self) -> dict[Literal["options_list", "disabled_flag"], Any]:
+        self.authdata_files = self.read_authdata_files()
+        if self.authdata_files:
+            options_list = tuple((line, line) for line in self.authdata_files)
+            disabled_flag = False
+            # load default auth_data to app (last entry).
+            self.app.app_data["auth_data"] = self.authdata_files[options_list[-1][1]]
+        else:
+            options_list = (("Any authfile not found. Please add it.", "notfound"),)
+            disabled_flag = True
+        return {"options_list": options_list, "disabled_flag": disabled_flag}
 
-        Raises
-        ------
-            custom_exceptions.AuthFilesError: not found any authfile
-
-        Returns
-        -------
-            dict[str, auth_data.AuthData]: {filename: AuthData}
-        """
-        authdata_files = auth_data.load_authdata_from_dir(dir_path=self.app.app_paths["auth_files_dir"])
-        if authdata_files:
-            return authdata_files
-        msg = "any auth files not found"
-        raise custom_exceptions.AuthFilesError(msg)
-
-    def _get_first_authfile(self, authdata_files: dict[str, auth_data.AuthData]) -> str:
-        """Return first filename in authdata_files.
-
-        Args:
-        ----
-            authdata_files (dict[str, auth_data.AuthData]): dict of {filename:AuthData}
-
-        Returns:
-        -------
-            str: first AuthData file name
-        """
-        return next(iter(authdata_files))
+    def read_authdata_files(self) -> dict[str, authdata.AuthData]:
+        return authdata.AuthDataParser.scan_dir(dir_path=self.app.app_paths["auth_files_dir"])
 
     @on(Select.Changed)
     def _select_changed(self, event: Select.Changed) -> None:
         selected_value = str(event.value)
-        self.app.app_data["auth_data"] = self.authdata[selected_value]
+        self.app.app_data["auth_data"] = self.authdata_files[selected_value]
 
 
 class WellcomeWidget(Static):
@@ -97,10 +186,11 @@ class TypeDownloadDirWidget(Static):
     @on(Input.Changed)
     def _show_invalid_reasons(self, event: Input.Changed) -> None:
         # Updating the UI to show the reasons why validation failed
-        if isinstance(event.validation_result, ValidationResult) and event.validation_result.is_valid:
-            self._validation_label.update("")
-        else:
-            self._validation_label.update(event.validation_result.failure_descriptions[0])
+        if isinstance(event.validation_result, ValidationResult):
+            if event.validation_result.is_valid:
+                self._validation_label.update("")
+            else:
+                self._validation_label.update(event.validation_result.failure_descriptions[0])
 
     @on(message_type=Input.Changed)
     def _set_download_dir(self, event: Input.Submitted) -> None:

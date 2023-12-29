@@ -8,7 +8,7 @@ from typing import Self
 
 import httpx
 
-from ytm_grabber.core.auth_data import AuthData
+from ytm_grabber.core.authdata import AuthData
 from ytm_grabber.core.custom_exceptions import TooManyRetryError
 
 

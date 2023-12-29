@@ -15,8 +15,9 @@ class SettingsTab(Static):
     def compose(self) -> ComposeResult:
         yield VerticalScroll(
             settings_widgets.WellcomeWidget(),
-            settings_widgets.SelectUserWidget(),
+            settings_widgets.UserWidget(classes="height_auto"),
             settings_widgets.TypeDownloadDirWidget(),
+            classes="height_auto",
         )
 
 
