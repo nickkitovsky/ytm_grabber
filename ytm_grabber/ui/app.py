@@ -8,7 +8,9 @@ from textual.containers import Horizontal
 from textual.widgets import Button, ContentSwitcher, DataTable
 
 from ytm_grabber.core.api_client import ApiClient
+from ytm_grabber.core.custom_exceptions import AuthDataError
 from ytm_grabber.parser.structures import Endpoint, Playlist
+from ytm_grabber.ui.custom_widgets import modal_screens
 from ytm_grabber.ui.tabs import DownloadTab, ExploreTab, SettingsTab
 
 if TYPE_CHECKING:
@@ -37,6 +39,7 @@ class YtMusicApp(App):
             "explore": Button(label="Explore", id="explore_tab", classes="menu_button"),
             "download": Button(label="Download", id="download_tab", classes="menu_button"),
         }
+
         self.download_table: DataTable = DataTable(id="download_table")
         super().__init__()
 
@@ -63,5 +66,8 @@ class YtMusicApp(App):
             if self.app_data["auth_data"]:
                 ApiClient.create_client(self.app_data["auth_data"])
             else:
-                msg = "auth data not loaded"
-                raise ValueError(msg)
+                self.query_one(ContentSwitcher).current = self.app_buttons["settings"].id
+                error_message = "Authdata file not selected.\nSelect authdata file please."
+                self.app.push_screen(screen=modal_screens.ShowMessageScreen(message=error_message))
+                # msg = "auth data not loaded"
+                # raise AuthDataError(msg)

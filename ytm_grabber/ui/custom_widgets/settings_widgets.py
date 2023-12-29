@@ -5,57 +5,16 @@ from typing import TYPE_CHECKING, Any, Literal
 
 from textual import on
 from textual.app import ComposeResult
-from textual.containers import Grid, Horizontal, Vertical
-from textual.screen import ModalScreen
+from textual.containers import Horizontal, Vertical
 from textual.validation import Function, ValidationResult
 from textual.widgets import Button, Input, Label, Markdown, Select, Static
 
 from ytm_grabber.core import authdata
 from ytm_grabber.core.custom_exceptions import ParsingError
+from ytm_grabber.ui.custom_widgets import modal_screens
 
 if TYPE_CHECKING:
     from ytm_grabber.ui.app import YtMusicApp
-
-
-class TypeFilenameScreen(ModalScreen):
-    """Screen with a dialog to enter filename."""
-
-    def compose(self) -> ComposeResult:
-        self._filename_input = Input(placeholder="Enter authfile name", id="filename_input")
-        yield Grid(
-            self._filename_input,
-            Button("Ok", variant="success", id="ok"),
-            Button("Cancel", variant="primary", id="cancel"),
-            id="modal_dialog",
-            classes="height_auto",
-        )
-
-    @on(message_type=Button.Pressed, selector="#ok")
-    def press_ok(self) -> None:
-        self.dismiss(self._filename_input.value)
-
-    @on(message_type=Button.Pressed, selector="#cancel")
-    def press_cancel(self) -> None:
-        self.app.pop_screen()
-
-
-class ClipboardContentErrorScreen(ModalScreen):
-    """Screen with a dialog clipboard format error."""
-
-    def compose(self) -> ComposeResult:
-        yield Grid(
-            Label(
-                "Clipboard content does not match cURL request.\nSee the instruction please.",
-                classes="center_element",
-            ),
-            Button("Ok", variant="success", classes="center_element", id="ok"),
-            id="modal_dialog",
-            classes="height_auto",
-        )
-
-    @on(message_type=Button.Pressed, selector="#ok")
-    def press_ok(self) -> None:
-        self.app.pop_screen()
 
 
 class UserWidget(Static):
@@ -81,9 +40,10 @@ class UserWidget(Static):
         try:
             new_user = authdata.AuthDataParser.read_from_clipboard()
         except ParsingError:
-            self.app.push_screen(screen=ClipboardContentErrorScreen())
+            error_message = "Clipboard content does not match cURL request.\nSee the instruction please."
+            self.app.push_screen(screen=modal_screens.ShowMessageScreen(message=error_message))
         else:
-            self.app.push_screen(TypeFilenameScreen(), dump_clipboard_data)
+            self.app.push_screen(modal_screens.TypeFilenameScreen(), dump_clipboard_data)
 
     def _refresh_select_widget(self) -> None:
         select_user_widget = self.query_one("#select_user_widget")

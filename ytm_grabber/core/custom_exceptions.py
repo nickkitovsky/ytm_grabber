@@ -17,5 +17,9 @@ class AuthFilesError(Exception):
     """Parse authfile error."""
 
 
+class AuthDataError(Exception):
+    """Error loading authdata."""
+
+
 class DumpAuthFileError(Exception):
     """Curl file content not found."""
