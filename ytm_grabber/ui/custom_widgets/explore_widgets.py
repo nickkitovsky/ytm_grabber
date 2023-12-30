@@ -2,7 +2,7 @@
 from typing import TYPE_CHECKING
 
 from textual import on
-from textual.containers import Horizontal, VerticalScroll
+from textual.containers import Grid, Horizontal, VerticalScroll
 from textual.widgets import Collapsible, Label, Switch
 
 from ytm_grabber.parser.structures import Endpoint, Playlist
@@ -34,8 +34,8 @@ class CustomCollapsible(Collapsible):
     def on_mount(self) -> None:
         self._is_mounted_response = False
 
-    def _get_child_container(self):
-        """Default child container if the function is not overridden."""
+    def _get_child_container(self) -> Label:
+        """Set default child container if the function is not overridden."""
         return Label(renderable="Child Container")
 
     def _watch_collapsed(self, collapsed: bool) -> None:
@@ -86,11 +86,11 @@ class EndpointCollapssible(CustomCollapsible):
         container = []
         for playlist in self.response_structure.playlists:
             container.append(
-                Horizontal(
+                Grid(
                     Switch(animate=True),
                     PlaylistCollapssible(playlist),
                     id=self._extract_playlist_id(playlist=playlist),
-                    classes="height_auto",
+                    classes="playlists_grid",
                 ),
             )
         return VerticalScroll(*container)

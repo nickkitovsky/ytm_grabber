@@ -68,6 +68,12 @@ Input.-valid:focus {
     grid-size: 2;
     grid-columns: 1fr 6fr;
 }
+.playlists_grid {
+    layout: grid;
+    grid-size: 2;
+    height: auto;
+    grid-columns: 1fr 11fr;
+}
 
 # MODAL SCREENS
 #modal_dialog {
