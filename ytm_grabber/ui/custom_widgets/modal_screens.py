@@ -8,8 +8,10 @@ from textual.widgets import Button, Input, Label
 class TypeFilenameScreen(ModalScreen):
     """Screen with a dialog to enter filename."""
 
+    BINDINGS = [("escape", "pop_screen", "Close")]
+
     def compose(self) -> ComposeResult:
-        self._filename_input = Input(placeholder="Enter authfile name", id="filename_input")
+        self._filename_input = Input(placeholder="Enter authfile name", id="filename_input", classes="center_element")
         yield Grid(
             self._filename_input,
             Button("Ok", variant="success", id="ok"),
@@ -17,6 +19,10 @@ class TypeFilenameScreen(ModalScreen):
             id="modal_dialog",
             classes="height_auto",
         )
+
+    @on(message_type=Input.Submitted, selector="#filename_input")
+    def press_enter_on_input(self) -> None:
+        self.dismiss(self._filename_input.value)
 
     @on(message_type=Button.Pressed, selector="#ok")
     def press_ok(self) -> None:
@@ -27,12 +33,10 @@ class TypeFilenameScreen(ModalScreen):
         self.app.pop_screen()
 
 
-#     """Screen with a dialog clipboard format error."""
-# /
-
-
 class ShowMessageScreen(ModalScreen):
     """Parent class for show message screen and a 'ok' button."""
+
+    BINDINGS = [("escape", "pop_screen", "Close")]
 
     def __init__(
         self, message: str = "", name: str | None = None, id: str | None = None, classes: str | None = None
@@ -52,6 +56,3 @@ class ShowMessageScreen(ModalScreen):
     @on(message_type=Button.Pressed, selector="#ok")
     def press_ok(self) -> None:
         self.app.pop_screen()
-
-
-# class ClipboardContentErrorScreen(ShowMessageScreen):

@@ -34,10 +34,11 @@ class YtMusicApp(App):
         }
         self.download_queue: dict[str, Playlist] = {}
         # set app buttons in menu
-        self.app_buttons: dict[Literal["settings", "explore", "download"], Button] = {
+        self.app_buttons: dict[Literal["settings", "explore", "download", "exit"], Button] = {
             "settings": Button(label="Settings", id="settings_tab", classes="menu_button"),
             "explore": Button(label="Explore", id="explore_tab", classes="menu_button"),
             "download": Button(label="Download", id="download_tab", classes="menu_button"),
+            "exit": Button(label="Exit", id="exit_button"),
         }
 
         self.download_table: DataTable = DataTable(id="download_table")
@@ -45,18 +46,25 @@ class YtMusicApp(App):
 
     def compose(self) -> ComposeResult:
         yield Horizontal(
-            self.app_buttons["settings"],
-            self.app_buttons["explore"],
-            self.app_buttons["download"],
-            id="buttons",
+            Horizontal(
+                self.app_buttons["settings"],
+                self.app_buttons["explore"],
+                self.app_buttons["download"],
+                id="buttons",
+            ),
+            self.app_buttons["exit"],
+            classes="height_auto",
         )
-
         yield ContentSwitcher(
             SettingsTab(id=self.app_buttons["settings"].id),
             ExploreTab(id=self.app_buttons["explore"].id),
             DownloadTab(id=self.app_buttons["download"].id),
             initial=self.app_buttons["settings"].id,
         )
+
+    @on(message_type=Button.Pressed, selector="#exit_button")
+    def do_exit(self) -> None:
+        self.exit()
 
     @on(message_type=Button.Pressed, selector=".menu_button")
     def press_menu_button(self, event: Button.Pressed) -> None:
@@ -71,3 +79,4 @@ class YtMusicApp(App):
                 self.app.push_screen(screen=modal_screens.ShowMessageScreen(message=error_message))
                 # msg = "auth data not loaded"
                 # raise AuthDataError(msg)
+        # elif str(event.button.id) == self.app_buttons["exit"].id:

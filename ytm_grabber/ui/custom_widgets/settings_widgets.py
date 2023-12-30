@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, Literal
 
 from textual import on
 from textual.app import ComposeResult
-from textual.containers import Horizontal, Vertical
+from textual.containers import Grid, Vertical
 from textual.validation import Function, ValidationResult
 from textual.widgets import Button, Input, Label, Markdown, Select, Static
 
@@ -59,7 +59,7 @@ class NewUserWidget(Static):
         self.app: YtMusicApp  # define type for self.app for better work IDE
 
     def compose(self) -> ComposeResult:
-        yield Horizontal(
+        yield Grid(
             Label(renderable="Add user", classes="label_text"),
             Button(
                 label="Click here to add new authfile from clipboard",
@@ -67,7 +67,7 @@ class NewUserWidget(Static):
                 classes="height_auto",
                 id="add_auth_file_button",
             ),
-            classes="height_auto",
+            classes="two_column_grid height_auto",
         )
 
 
@@ -81,7 +81,7 @@ class SelectUserWidget(Static):
     def compose(self) -> ComposeResult:
         options = self.get_select_widget_content()
 
-        yield Horizontal(
+        yield Grid(
             Label(renderable="Select user", classes="label_text"),
             Select(
                 id="select_user_widget",
@@ -90,7 +90,7 @@ class SelectUserWidget(Static):
                 value=options["options_list"][-1][1],
                 disabled=options["disabled_flag"],
             ),
-            classes="height_auto width_90percent",
+            classes="two_column_grid height_auto",
         )
 
     def get_select_widget_content(self) -> dict[Literal["options_list", "disabled_flag"], Any]:
@@ -132,11 +132,11 @@ class TypeDownloadDirWidget(Static):
     def compose(self) -> ComposeResult:
         self.app: YtMusicApp  # define type for self.app for better work IDE
         self._validation_label = Label("", id="validation_result")
-        with Horizontal(classes="height_auto width_90percent"):
+        with Grid(classes="height_auto two_column_grid"):
             yield Label(renderable="Enter path", classes="label_text")
             with Vertical(classes="height_auto"):
                 yield Input(
-                    placeholder="Enter a dir path to download music or `files/music` dir default",
+                    placeholder="files/music (enter a dir path to download music)",
                     validators=[
                         Function(self._is_dir, "Value is not dir."),
                     ],
