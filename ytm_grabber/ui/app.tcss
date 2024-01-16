@@ -1,7 +1,6 @@
 Screen {
     align: center middle;
     padding: 1;
-    # width: 90%;
 }
 
 ContentSwitcher {
@@ -31,26 +30,13 @@ Input.-valid:focus {
     border: tall $success;
 }
 
-Input {
-    padding: 0 1;
-    width: 99%;
-    offset: 1 0;
-}
-Select {
-    # width: 80%;
-}
 .height_auto {
     height: auto;    
 }
-.width_90percent {
-    width: 90%;    
-}
-
 
 .label_text {
     margin: 1 5;
     text-style: bold;
-    # width: 20%;
 }
 
 #validation_result {
@@ -73,16 +59,23 @@ Select {
 }
 
 #add_auth_file_button {
-    # width: 80%;
-    padding: 0 6;
-    align: center middle;
-    # offset: 1 0;
-    margin: 0 8;
-}
-TypeFilenameScreen {
-    align: center middle;
+    offset: 1 0;
+
 }
 
+.two_column_grid {
+    layout: grid;
+    grid-size: 2;
+    grid-columns: 1fr 6fr;
+}
+.playlists_grid {
+    layout: grid;
+    grid-size: 2;
+    height: auto;
+    grid-columns: 1fr 11fr;
+}
+
+# MODAL SCREENS
 #modal_dialog {
     grid-size: 2;
     grid-gutter: 1 2;
@@ -94,12 +87,7 @@ TypeFilenameScreen {
     background: $surface;
 }
 
-#filename_input {
-    column-span: 2;
-    content-align: center middle;
-}
 .center_element {
     column-span: 2;
-    align: center middle;
     content-align: center middle;
 }
