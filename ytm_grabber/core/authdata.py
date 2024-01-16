@@ -27,13 +27,8 @@ class AuthData:
         if "^" in self.raw_curl_content[0]:
             self.raw_curl_content = self._fix_cmd_break_lines(content_with_cr=raw_curl_content)
         try:
-<<<<<<< HEAD
             self._parse_authdata()
-        except (IndexError, json.JSONDecodeError) as exc:
-=======
-            self.authdata = self.parse_authdata()
         except (IndexError, json.JSONDecodeError, AttributeError) as exc:
->>>>>>> ImprovedUI
             msg = "error of parse curl_data"
             raise ParsingError(msg) from exc
 
