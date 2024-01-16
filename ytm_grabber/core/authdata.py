@@ -7,7 +7,13 @@ from urllib.parse import parse_qsl, urlsplit
 
 import pyperclip  # type: ignore[import-untyped]
 
-from ytm_grabber.core.custom_exceptions import DumpAuthFileError, ParsingError
+
+class DumpAuthFileError(Exception):
+    """Curl file content not found."""
+
+
+class ParsingError(Exception):
+    """Error of parsing data."""
 
 
 class AuthData:
