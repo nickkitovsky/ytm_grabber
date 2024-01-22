@@ -1,10 +1,6 @@
 """Exceptions module."""
 
 
-class TooManyRetryError(Exception):
-    """TooManyRetryError exception class for retry decorator."""
-
-
 class PayloadError(Exception):
     """Wrong payload format."""
 

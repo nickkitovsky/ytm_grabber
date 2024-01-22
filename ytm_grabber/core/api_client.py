@@ -9,7 +9,14 @@ from typing import Self
 import httpx
 
 from ytm_grabber.core.authdata import AuthData
-from ytm_grabber.core.custom_exceptions import TooManyRetryError
+
+
+class TooManyRetryError(Exception):
+    """TooManyRetryError exception class for retry decorator."""
+
+
+class ExistingClientNotFoundError(Exception):
+    """TooManyRetryError exception class for retry decorator."""
 
 
 def retry(attempts_number: int, retry_sleep_sec: int):
@@ -107,7 +114,7 @@ class ApiClient:
 
         Raises
         ------
-            ValueError: instance of ApiClient not found
+            ExistingClientNotFoundError: instance of ApiClient not found
 
         Returns
         -------
@@ -115,9 +122,8 @@ class ApiClient:
         """
         if hasattr(cls._instance, "client"):
             return cls()
-            # return cls._instance
         msg = "Instance not found. First use ApiClient.create_clinet(AuthData) function."
-        raise ValueError(msg)
+        raise ExistingClientNotFoundError(msg)
 
     @retry(5, 1)
     def send_request(self, payload: dict, url: str, timeout: int = 10) -> dict | None:
