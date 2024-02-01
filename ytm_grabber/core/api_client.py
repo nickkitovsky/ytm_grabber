@@ -2,56 +2,12 @@
 
 
 import atexit
-import functools
-import time
 from typing import Self
 
 import httpx
 
 from ytm_grabber.core.authdata import AuthData
-
-
-class TooManyRetryError(Exception):
-    """TooManyRetryError exception class for retry decorator."""
-
-
-class ExistingClientNotFoundError(Exception):
-    """TooManyRetryError exception class for retry decorator."""
-
-
-def retry(attempts_number: int, retry_sleep_sec: int):
-    """Retry attempts run of function.
-
-    Args:
-    ----
-        attempts_number (int): number of attempts
-        retry_sleep_sec (int): sleep between attempts
-
-    Returns:
-    -------
-        none: this is decorator
-    """
-
-    def decarator(func):
-        @functools.wraps(wrapped=func)
-        def wrapper(*args, **kwargs):
-            # TODO: For logging change '_' to attempt
-            for _ in range(attempts_number):
-                try:
-                    return func(*args, **kwargs)
-                except Exception:
-                    time.sleep(retry_sleep_sec)
-                # TODO: Add logging 'Trying attempt {attempt+1} of {attempts_number}'
-
-            # TODO: Add logging 'func {func.__name__} retry failed'
-            msg = f"Exceed max retry num: {attempts_number} failed."
-            raise TooManyRetryError(
-                msg,
-            )
-
-        return wrapper
-
-    return decarator
+from ytm_grabber.core.custom_exceptions import AuthDataError, ExistingClientNotFoundError
 
 
 class ApiClient:
@@ -61,6 +17,8 @@ class ApiClient:
     Alternative: create ApiClient() object and then use load_auth_data(AuthData) function.
     """
 
+    UNAUTHORIZED_CODE = 401
+    OK_CODE = 200
     # store class instance for use singleton pattern
     _instance = None
 
@@ -122,10 +80,10 @@ class ApiClient:
         """
         if hasattr(cls._instance, "client"):
             return cls()
-        msg = "Instance not found. First use ApiClient.create_clinet(AuthData) function."
+        msg = "Instance not found. First use ApiClient.create_client(AuthData) function."
         raise ExistingClientNotFoundError(msg)
 
-    @retry(5, 1)
+    # @retry(5, 1)
     def send_request(self, payload: dict, url: str, timeout: int = 10) -> dict | None:
         """Send request to API.
 
@@ -151,10 +109,14 @@ class ApiClient:
             params=self.auth_data.params,
             json=json_data_with_payload,
         )
-        if response.is_success:
-            return response.json()
-        # TODO: Add logging 'Error of get response with:\n%s', payload
-        raise httpx.ResponseNotRead
+        match response:
+            case httpx.Response() if response.status_code == self.OK_CODE:
+                return response.json()
+            case httpx.Response() if response.status_code == self.UNAUTHORIZED_CODE:
+                msg = "Auth data is not valid. Please update auth data."
+                raise AuthDataError(msg)
+            case _:
+                raise httpx.ResponseNotRead
 
     def _init_client(self) -> httpx.Client:
         return httpx.Client()

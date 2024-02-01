@@ -7,13 +7,7 @@ from urllib.parse import parse_qsl, urlsplit
 
 import pyperclip  # type: ignore[import-untyped]
 
-
-class DumpAuthFileError(Exception):
-    """Curl file content not found."""
-
-
-class ParsingError(Exception):
-    """Error of parsing data."""
+from ytm_grabber.core.custom_exceptions import DumpAuthFileError, ParsingError
 
 
 class AuthData:
@@ -153,4 +147,5 @@ def dump_authdata(authdata: AuthData, filename: str, authfiles_dir: str | Path =
             fs.write("".join(authdata.raw_curl_content))
     else:
         msg = "Raw curl content not found."
+        raise DumpAuthFileError(msg)
         raise DumpAuthFileError(msg)
