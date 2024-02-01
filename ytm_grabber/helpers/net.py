@@ -37,7 +37,3 @@ def retry(attempts_number: int, retry_sleep_sec: int):
         return wrapper
 
     return decarator
-
-    return decarator
-
-    return decarator
