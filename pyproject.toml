@@ -19,7 +19,7 @@ pyperclip = "^1.8.2"
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.25.0"
 textual-dev = "^1.1.0"
-ruff = "^0.1.7"
+ruff = "^0.3.0"
 
 [build-system]
 requires = ["poetry-core"]
